@@ -43,6 +43,21 @@ export function ScrollGallery({
   });
   const lenisRef = useSmoothScroll(scrollRef, contentRef);
 
+  const getLastImageResetScrollTop = useCallback(() => {
+    const root = scrollRef.current;
+    const lastItem = lastItemRef.current;
+    const lastImage = lastItem?.querySelector<HTMLElement>('[data-gallery-image]');
+    const resetTarget = lastImage ?? lastItem;
+
+    if (!root || !resetTarget) {
+      return null;
+    }
+
+    return root.scrollTop
+      + resetTarget.getBoundingClientRect().top
+      - root.getBoundingClientRect().top;
+  }, [scrollRef]);
+
   const resetToDefault = useCallback(() => {
     const root = scrollRef.current;
 
@@ -51,6 +66,7 @@ export function ScrollGallery({
     }
 
     loopLockRef.current = true;
+    touchStateRef.current.active = false;
     onColorChange('#0a0a0a');
 
     const unlock = () => {
@@ -77,21 +93,16 @@ export function ScrollGallery({
 
   const checkLastImagePosition = useCallback(() => {
     const root = scrollRef.current;
-    const lastItem = lastItemRef.current;
-    const lastImage = lastItem?.querySelector<HTMLElement>('[data-gallery-image]');
-    const resetTarget = lastImage ?? lastItem;
+    const resetScrollTop = getLastImageResetScrollTop();
 
-    if (!root || !resetTarget || loopLockRef.current) {
+    if (!root || resetScrollTop === null || loopLockRef.current) {
       return;
     }
 
-    const rootTop = root.getBoundingClientRect().top;
-    const lastItemTop = resetTarget.getBoundingClientRect().top;
-
-    if (lastItemTop <= rootTop + 1) {
+    if (root.scrollTop >= resetScrollTop - 1) {
       resetToDefault();
     }
-  }, [resetToDefault, scrollRef]);
+  }, [getLastImageResetScrollTop, resetToDefault, scrollRef]);
 
   const scheduleLastImageCheck = useCallback(() => {
     if (typeof window === 'undefined') {
@@ -179,6 +190,23 @@ export function ScrollGallery({
         maxScroll,
         Math.max(0, state.startScrollTop + deltaY),
       );
+      const resetScrollTop = getLastImageResetScrollTop();
+
+      if (
+        resetScrollTop !== null
+        && nextScrollTop >= resetScrollTop - 1
+        && root.scrollTop > 0
+      ) {
+        root.scrollTop = Math.max(0, resetScrollTop);
+        onScrollProgress();
+        resetToDefault();
+
+        if (event.cancelable) {
+          event.preventDefault();
+        }
+
+        return;
+      }
 
       if (root.scrollTop !== nextScrollTop) {
         root.scrollTop = nextScrollTop;
@@ -206,7 +234,13 @@ export function ScrollGallery({
       window.removeEventListener('touchend', handleTouchEnd);
       window.removeEventListener('touchcancel', handleTouchEnd);
     };
-  }, [onScrollProgress, scheduleLastImageCheck, scrollRef]);
+  }, [
+    getLastImageResetScrollTop,
+    onScrollProgress,
+    resetToDefault,
+    scheduleLastImageCheck,
+    scrollRef,
+  ]);
 
   return (
     <section
