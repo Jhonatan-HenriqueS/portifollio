@@ -51,7 +51,10 @@ button {
 }
 
 .portfolio-scrollbar {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   scrollbar-width: none;
+  touch-action: pan-y;
 }
 
 .portfolio-scrollbar::-webkit-scrollbar {

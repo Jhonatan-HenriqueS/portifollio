@@ -22,6 +22,7 @@ export function useSmoothScroll(
       return;
     }
 
+    const usesCoarsePointer = window.matchMedia('(pointer: coarse)').matches;
     const wrapper = wrapperRef?.current ?? window;
     const content = contentRef?.current ?? document.documentElement;
 
@@ -34,7 +35,7 @@ export function useSmoothScroll(
       orientation: 'vertical',
       gestureOrientation: 'vertical',
       smoothWheel: true,
-      syncTouch: true,
+      syncTouch: !usesCoarsePointer,
       autoRaf: false,
     });
 

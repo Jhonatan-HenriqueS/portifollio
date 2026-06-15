@@ -35,6 +35,12 @@ export function ScrollGallery({
   const loopLockRef = useRef(false);
   const checkFrameRef = useRef<number | null>(null);
   const checkTimeoutRef = useRef<number | null>(null);
+  const touchStateRef = useRef({
+    active: false,
+    startScrollTop: 0,
+    startX: 0,
+    startY: 0,
+  });
   const lenisRef = useSmoothScroll(scrollRef, contentRef);
 
   const resetToDefault = useCallback(() => {
@@ -125,6 +131,82 @@ export function ScrollGallery({
       window.clearTimeout(checkTimeoutRef.current);
     }
   }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const coarsePointer = window.matchMedia('(pointer: coarse)');
+
+    const shouldUseTouchScroll = () => coarsePointer.matches;
+
+    const handleTouchStart = (event: TouchEvent) => {
+      const root = scrollRef.current;
+      const touch = event.touches[0];
+
+      if (!root || !touch || event.touches.length !== 1 || !shouldUseTouchScroll()) {
+        touchStateRef.current.active = false;
+        return;
+      }
+
+      touchStateRef.current = {
+        active: true,
+        startScrollTop: root.scrollTop,
+        startX: touch.clientX,
+        startY: touch.clientY,
+      };
+    };
+
+    const handleTouchMove = (event: TouchEvent) => {
+      const root = scrollRef.current;
+      const state = touchStateRef.current;
+      const touch = event.touches[0];
+
+      if (!root || !state.active || !touch || !shouldUseTouchScroll()) {
+        return;
+      }
+
+      const deltaX = state.startX - touch.clientX;
+      const deltaY = state.startY - touch.clientY;
+
+      if (Math.abs(deltaY) < 4 || Math.abs(deltaX) > Math.abs(deltaY)) {
+        return;
+      }
+
+      const maxScroll = Math.max(root.scrollHeight - root.clientHeight, 0);
+      const nextScrollTop = Math.min(
+        maxScroll,
+        Math.max(0, state.startScrollTop + deltaY),
+      );
+
+      if (root.scrollTop !== nextScrollTop) {
+        root.scrollTop = nextScrollTop;
+        onScrollProgress();
+        scheduleLastImageCheck();
+      }
+
+      if (event.cancelable) {
+        event.preventDefault();
+      }
+    };
+
+    const handleTouchEnd = () => {
+      touchStateRef.current.active = false;
+    };
+
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('touchend', handleTouchEnd, { passive: true });
+    window.addEventListener('touchcancel', handleTouchEnd, { passive: true });
+
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('touchcancel', handleTouchEnd);
+    };
+  }, [onScrollProgress, scheduleLastImageCheck, scrollRef]);
 
   return (
     <section
