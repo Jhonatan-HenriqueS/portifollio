@@ -8,6 +8,7 @@ import { HeroFixed } from '@/components/HeroFixed';
 import { PageNav } from '@/components/PageNav';
 import { ProjectsCard } from '@/components/ProjectsCard';
 import { ScrollGallery } from '@/components/ScrollGallery';
+import { ScrollHint } from '@/components/ScrollHint';
 import { SocialDock } from '@/components/SocialDock';
 import { useScrollProgress } from '@/hooks/useScrollProgress';
 
@@ -69,6 +70,7 @@ export default function Home() {
       <PageNav onProjectsClick={handleProjectsClick} />
       <ProjectsCard />
       <CopyrightMark />
+      <ScrollHint />
       <SocialDock />
     </main>
   );
