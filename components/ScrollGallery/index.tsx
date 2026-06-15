@@ -151,12 +151,24 @@ export function ScrollGallery({
     const coarsePointer = window.matchMedia('(pointer: coarse)');
 
     const shouldUseTouchScroll = () => coarsePointer.matches;
+    const shouldIgnoreTouchEvent = (event: TouchEvent) => event
+      .composedPath()
+      .some((node) => (
+        node instanceof HTMLElement
+        && node.hasAttribute('data-gallery-touch-ignore')
+      ));
 
     const handleTouchStart = (event: TouchEvent) => {
       const root = scrollRef.current;
       const touch = event.touches[0];
 
-      if (!root || !touch || event.touches.length !== 1 || !shouldUseTouchScroll()) {
+      if (
+        !root
+        || !touch
+        || event.touches.length !== 1
+        || !shouldUseTouchScroll()
+        || shouldIgnoreTouchEvent(event)
+      ) {
         touchStateRef.current.active = false;
         return;
       }
@@ -173,6 +185,11 @@ export function ScrollGallery({
       const root = scrollRef.current;
       const state = touchStateRef.current;
       const touch = event.touches[0];
+
+      if (shouldIgnoreTouchEvent(event)) {
+        touchStateRef.current.active = false;
+        return;
+      }
 
       if (!root || !state.active || !touch || !shouldUseTouchScroll()) {
         return;

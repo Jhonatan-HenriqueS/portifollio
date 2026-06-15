@@ -17,7 +17,9 @@ export function ProjectsOverlay({ onClose }: ProjectsOverlayProps) {
       aria-label="Projetos de Jhonatan Henrique"
       aria-modal="true"
       animate={{ opacity: 1 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-7 backdrop-blur-[12px]"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-black/70 px-4 py-7 backdrop-blur-[12px]"
+      data-gallery-touch-ignore
+      data-lenis-prevent-touch
       exit={{ opacity: 0 }}
       initial={{ opacity: 0 }}
       onClick={onClose}
@@ -41,7 +43,11 @@ export function ProjectsOverlay({ onClose }: ProjectsOverlayProps) {
           <X aria-hidden="true" className="size-5" />
         </button>
 
-        <div className="grid max-h-[78vh] grid-cols-1 gap-4 overflow-y-auto pr-1 portfolio-scrollbar sm:grid-cols-2 md:grid-cols-3">
+        <div
+          className="grid max-h-[calc(100svh-7.5rem)] grid-cols-1 gap-4 overflow-y-auto overscroll-contain pr-1 portfolio-scrollbar sm:max-h-[78vh] sm:grid-cols-2 md:grid-cols-3"
+          data-gallery-touch-ignore
+          data-lenis-prevent-touch
+        >
           {projects.map((project, index) => (
             <ProjectCard
               index={index}
